@@ -92,7 +92,7 @@ export default function CreateListing() {
 
   const handleRemoveImage = (index) => {
     setFormData({
-      ...setFormData,
+      ...formData,
       imageUrls: formData.imageUrls.filter((_, i) => i !== index),
     });
   };
@@ -333,7 +333,7 @@ export default function CreateListing() {
             {imageUploadError && imageUploadError}
           </p>
           {formData.imageUrls.length > 0 &&
-            formData.imageUrls.map((url, index) => {
+            formData.imageUrls.map((url, index) => (
               <div
                 key={url}
                 className="flex justify-between p-3 border items-center"
@@ -350,8 +350,8 @@ export default function CreateListing() {
                 >
                   Delete
                 </button>
-              </div>;
-            })}
+              </div>
+            ))}
           <button
             disabled={loading || uploading}
             className="p-3 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95 disabled:opacity-80"
