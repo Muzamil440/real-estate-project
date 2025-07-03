@@ -1,13 +1,7 @@
+import axios from 'axios';
 import { useRef, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import {
-  getDownloadURL,
-  getStorage,
-  ref,
-  uploadBytesResumable,
-} from 'firebase/storage';
-import { app } from '../firebase';
 import {
   updateUserStart,
   updateUserSuccess,
@@ -23,7 +17,6 @@ export default function Profile() {
   const fileRef = useRef(null);
   const { currentUser, loading, error } = useSelector((state) => state.user);
   const [file, setFile] = useState(undefined);
-  console.log(file);
   const [filePerc, setFilePerc] = useState(0);
   const [fileUploadError, setFileUploadError] = useState(false);
   const [formData, setFormData] = useState({});
@@ -32,40 +25,36 @@ export default function Profile() {
   const [userListings, setUserListings] = useState([]);
   const dispatch = useDispatch();
 
-  // firebase storage
-  // allow read;
-  // allow write: if
-  // request.resource.size < 2 * 1024 * 1024 &&
-  // request.resource.contentType.matches('image/.*')
-
   useEffect(() => {
     if (file) {
       handleUploadFile(file);
     }
   }, [file]);
 
-  const handleUploadFile = (file) => {
-    const storage = getStorage(app);
-    const fileName = new Date().getTime() + file.name;
-    const storageRef = ref(storage, fileName);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+  const handleUploadFile = async (file) => {
+    const data = new FormData();
+    data.append('file', file);
+    data.append('upload_preset', 'first_time_using_cloudinary');
+    data.append('cloud_name', 'dngv73h0u');
+    try {
+      setFileUploadError(false);
 
-    uploadTask.on(
-      'state_changed',
-      (snapshot) => {
-        const progress =
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        setFilePerc(Math.round(progress));
-      },
-      (error) => {
-        setFileUploadError(true);
-      },
-      () => {
-        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) =>
-          setFormData({ ...formData, avatar: downloadURL }),
-        );
-      },
-    );
+      const res = await axios.post(
+        'https://api.cloudinary.com/v1_1/dngv73h0u/image/upload',
+        data,
+        {
+          onUploadProgress: (ProgressEvent) => {
+            const percent = (ProgressEvent.loaded / ProgressEvent.total) * 100;
+            setFilePerc(percent);
+          },
+        },
+      );
+
+      setFormData({ ...formData, avatar: res.data.url });
+    } catch (error) {
+      setFileUploadError(true);
+      setFilePerc(0);
+    }
   };
 
   const handleChange = (e) => {
